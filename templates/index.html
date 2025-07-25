@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Feed Reader</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 800px; }
+        h1 { color: #0d6efd; margin-bottom: 30px; }
+        .accordion-button:not(.collapsed) { background-color: #e7f1ff; color: #0c63e4; }
+        .accordion-body img { max-height: 300px; object-fit: cover; width: 100%; border-radius: 5px; }
+        #loading { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">News Feed Reader</h1>
+        
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-6">
+                <select id="category" class="form-select">
+                    <option value="general" {% if default_category == 'general' %}selected{% endif %}>General</option>
+                    <option value="business" {% if default_category == 'business' %}selected{% endif %}>Business</option>
+                    <option value="technology" {% if default_category == 'technology' %}selected{% endif %}>Technology</option>
+                    <option value="science" {% if default_category == 'science' %}selected{% endif %}>Science</option>
+                    <option value="health" {% if default_category == 'health' %}selected{% endif %}>Health</option>
+                    <option value="sports" {% if default_category == 'sports' %}selected{% endif %}>Sports</option>
+                    <option value="entertainment" {% if default_category == 'entertainment' %}selected{% endif %}>Entertainment</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="loading" class="text-center" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading news...</p>
+        </div>
+        
+        <div class="accordion" id="newsAccordion"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNews(document.getElementById('category').value);
+            
+            document.getElementById('category').addEventListener('change', function() {
+                loadNews(this.value);
+            });
+        });
+
+        async function loadNews(category) {
+            const accordion = document.getElementById('newsAccordion');
+            const loading = document.getElementById('loading');
+            
+            accordion.innerHTML = '';
+            loading.style.display = 'block';
+            
+            try {
+                const response = await fetch(`/api/news?category=${category}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                if (data.articles.length === 0) {
+                    accordion.innerHTML = '<div class="alert alert-info">No articles found for this category.</div>';
+                    return;
+                }
+                
+                let accordionHTML = '';
+                data.articles.forEach((article, index) => {
+                    accordionHTML += `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading${index}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
+                                ${article.title || 'No title'}
+                            </button>
+                        </h2>
+                        <div id="collapse${index}" class="accordion-collapse collapse" 
+                            aria-labelledby="heading${index}" data-bs-parent="#newsAccordion">
+                            <div class="accordion-body">
+                                ${article.description ? `<p>${article.description}</p>` : ''}
+                                ${article.content ? `<p>${article.content}</p>` : ''}
+                                ${article.url ? `<a href="${article.url}" target="_blank" class="btn btn-primary">Read more</a>` : ''}
+                                ${article.urlToImage ? `<img src="${article.urlToImage}" class="img-fluid mt-3">` : ''}
+                                <p class="text-muted mt-2">
+                                    ${article.source.name || ''} 
+                                    ${article.publishedAt ? ` • ${new Date(article.publishedAt).toLocaleString()}` : ''}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                });
+                
+                accordion.innerHTML = accordionHTML;
+            } catch (error) {
+                accordion.innerHTML = `<div class="alert alert-danger">Error loading news: ${error.message}</div>`;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

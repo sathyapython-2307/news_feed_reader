@@ -1,0 +1,28 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 800px;
+}
+
+h1 {
+    color: #0d6efd;
+    margin-bottom: 30px;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    color: #0c63e4;
+}
+
+.accordion-body img {
+    max-height: 300px;
+    object-fit: cover;
+    width: 100%;
+    border-radius: 5px;
+}
+
+#loading {
+    margin: 20px 0;
+}
